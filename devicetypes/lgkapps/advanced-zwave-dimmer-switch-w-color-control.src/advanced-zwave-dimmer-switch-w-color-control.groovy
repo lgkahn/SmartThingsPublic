@@ -27,12 +27,10 @@ metadata {
 	definition (name: "Advanced Zwave Dimmer Switch w Color Control", namespace: "lgkapps", author: "kahn@lgk.com") {
 		capability "Switch Level"
 		capability "Actuator"
-		capability "Indicator"
 		capability "Switch"
 		capability "Polling"
 		capability "Refresh"
 		capability "Sensor"
-	        capability "Switch Level"
 	
 		fingerprint inClusters: "0x26"
 	}
