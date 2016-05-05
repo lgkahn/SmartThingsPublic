@@ -110,7 +110,7 @@ preferences {
 		}
 	
 		valueTile("humidity", "device.humidity", inactiveLabel: false) {
-			state "humidity", label:'Humidity\n${currentValue}%', unit:"",
+			state "humidity", label:'${currentValue}%', unit:"",
               icon: "http://cdn.device-icons.smartthings.com/Weather/weather12-icn@2x.png",
                backgroundColors : [
                     [value: 01, color: "#724529"],
@@ -256,7 +256,7 @@ def zwaveEvent(physicalgraph.zwave.commands.sensormultilevelv2.SensorMultilevelR
 			/* temperature */
            // log.debug "try4"
      
-            BigDecimal offset = settings.TempOffset
+            BigDecimal offset = settings.TempOffset == null ? 0 : settings.TempOffset
             def startval =convertTemperatureIfNeeded(cmd.scaledSensorValue, cmd.scale == 1 ? "F" : "C", cmd.precision)
            log.debug "scaled scaled sensor value = $cmd.scaledSensorValue scale = $cmd.scale"
            log.debug "offset = $offset"
@@ -278,7 +278,8 @@ def zwaveEvent(physicalgraph.zwave.commands.sensormultilevelv2.SensorMultilevelR
 			break;
 		case 5:
 			/* humidity */
-            map.value = (cmd.scaledSensorValue.toInteger() + settings.HumidOffset)
+            BigDecimal humidOffset = settings.HumidOffset == null ? 0 : settings.HumidOffset
+            map.value = (cmd.scaledSensorValue.toInteger() + humidOffset)
 			map.unit = "%"
 			map.name = "humidity"
 			break;
@@ -418,6 +419,4 @@ if (settings.TempChangeAmount < 1)
     }
     
     response(configure())
-}  
- 
-  
+}
