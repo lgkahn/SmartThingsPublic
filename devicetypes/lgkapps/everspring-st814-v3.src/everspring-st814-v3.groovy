@@ -30,7 +30,7 @@
  */
 metadata 
 {
-	definition (name: "EverSpring ST814 V3", namespace: "lgkapps", author: "@Ben chad@monroe.io and lgkahn")
+	definition (name: "EverSpring ST814 V3 + Association", namespace: "lgkapps", author: "@Ben chad@monroe.io and lgkahn")
 	{
 		capability "Battery"
 		capability "Temperature Measurement"
@@ -38,6 +38,8 @@ metadata
 		capability "Configuration"
 		capability "Alarm"
 		capability "Sensor"
+		
+		command "associate"
         
         command "setBackLightLevel"
         attribute "lastUpdate", "string"
@@ -64,7 +66,10 @@ preferences {
     input("ReportTime", "number", title: "Report Timeout Interval?", description: "The time in minutes after which an update is sent?", defaultValue: 180, required: false)
     input("TempOffset", "number", title: "Temperature Offset/Adjustment -10 to +10 in Degrees?",range: "-10..10", description: "If your temperature is innacurate this will offset/adjust it by this many degrees.", defaultValue: 0, required: false)
     input("HumidOffset", "number", title: "Humidity Offset/Adjustment -10 to +10 in percent?",range: "-10..10", description: "If your humidty is innacurate this will offset/adjust it by this percent.", defaultValue: 0, required: false)
-   }
+    input("group", "number", title: "Association group", description: "", defaultValue: 1, required: false, displayDuringSetup: false)
+	input("deviceId", "string", title: "Target switch device network ID", required: false, displayDuringSetup: false)
+	   
+}
 
 	simulator 
 	{
@@ -305,6 +310,19 @@ def zwaveEvent(physicalgraph.zwave.Command cmd)
 	[:]
 }
 
+def zwaveEvent(physicalgraph.zwave.commands.associationv2.AssociationReport cmd) {
+        def result = []
+        if (cmd.nodeId.any { it == zwaveHubNodeId }) {
+                result << createEvent(descriptionText: "$device.displayName is associated in group ${cmd.groupingIdentifier}")
+        } else if (cmd.groupingIdentifier == 1) {
+                // We're not associated properly to group 1, set association
+                result << createEvent(descriptionText: "Associating $device.displayName in group ${cmd.groupingIdentifier}")
+                result << response(zwave.associationV2.associationSet(groupingIdentifier:cmd.groupingIdentifier, nodeId:zwaveHubNodeId))
+        }
+        result
+}
+
+
 def configure() 
 {
 
@@ -327,6 +345,7 @@ log.debug "Temperature change value = $settings.TempChangeAmount"
 log.debug "Humidity change value = $settings.HumidChangeAmount"
 log.debug "Temperature adjust = $settings.TempOffset"
 log.debug "Humidity adjust = $settings.HumidOffset"
+log.debug "Controlled device = $settings.deviceId"
 
 
      def now = new Date().format('MM/dd/yyyy h:mm a',location.timeZone)
@@ -341,8 +360,11 @@ sendEvent(name: "lastUpdate", value: now, descriptionText: "Configured: $now")
         zwave.configurationV1.configurationSet(parameterNumber: 7, size: 1, scaledConfigurationValue: settings.TempChangeAmount).format(),
 
         /* report a humidity change of 5 percent */
-        zwave.configurationV1.configurationSet(parameterNumber: 8, size: 1, scaledConfigurationValue: settings.HumidChangeAmount).format()
-	]) 
+        zwave.configurationV1.configurationSet(parameterNumber: 8, size: 1, scaledConfigurationValue: settings.HumidChangeAmount).format(),
+        
+        /* associate controlled device */
+        associate(settings.deviceId, settings.group ? settings.group as Integer : 1)
+	])
     
 }
    
@@ -420,4 +442,16 @@ if (settings.TempChangeAmount < 1)
     response(configure())
 }  
  
-  
+def associate(target, group = 1) {
+	if (target instanceof String) {
+		def cmds = target.findAll(/[0-9a-fA-F]{2}/) { id -> zwave.associationV1.associationSet(groupingIdentifier:group, nodeId:Integer.parseInt(id, 16)).format() }
+		log.debug "Accessory switch associate $target cmd $cmds"
+		return delayBetween(cmds)
+	} else if (target instanceof Integer) {
+		return zwave.associationV2.associationSet(groupingIdentifier:group, nodeId:target.id).format()
+	} else if (target.id) {
+		return zwave.associationV2.associationSet(groupingIdentifier:group, nodeId:Integer.parseInt(target.id, 16)).format()
+	} else {
+		log.warn "couldn't associate $device.displayName with $target"
+	}
+}
