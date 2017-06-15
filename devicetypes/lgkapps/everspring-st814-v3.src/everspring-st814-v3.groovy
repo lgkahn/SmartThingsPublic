@@ -18,6 +18,8 @@
  *
  * lgk version 4 figured out how to do time without user input of time zone and works correctly for daylight saving etc.
  *
+ * lgk version 5. Fix for how smartthings changed the way labels are displayed.
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
  *
@@ -110,7 +112,7 @@ preferences {
 		}
 	
 		valueTile("humidity", "device.humidity", inactiveLabel: false) {
-			state "humidity", label:'Humidity\n${currentValue}%', unit:"",
+			state "humidity", label:'Humidity\n ${currentValue}%', unit:"",
               icon: "http://cdn.device-icons.smartthings.com/Weather/weather12-icn@2x.png",
                backgroundColors : [
                     [value: 01, color: "#724529"],
@@ -129,7 +131,7 @@ preferences {
 		}
 
 	valueTile("battery", "device.battery", inactiveLabel: false) {
-			state "battery", label:'Battery\n${currentValue}%', unit:"",
+			state "battery", label:'Battery\n ${currentValue}%', unit:"",
              backgroundColors : [
                     [value: 20, color: "#720000"],
                     [value: 40, color: "#724529"],
