@@ -18,6 +18,7 @@ v 7 forgot to add the preference section added now.
 v8 turn on extra debugging to figure out why direct sets are failing from routines
 v9 fixed issue with routines not setting temps.. it was silently timing out with no error.. needed to up delay times
 v 10 figured out how to do time without user input timezone and handles daylight saving correctly.
+v 11 fix for change in how labels are handled.
 
 even the stock one with a delay time would only set the heat setpoint from a routine (first call) and would timeout on the cool
 one.. I upped the delays to 45 seconds and it seems to set both. Then i passed in a smaller delay from the toggle buttons so you
@@ -125,7 +126,7 @@ preferences {
 
    valueTile("coolingSetpoint", "device.coolingSetpoint", inactiveLabel: false) 
     	  {
-          state "default", label:'Cool\n${currentValue}°F', unit:"F",
+          state "default", label:'Cool\n ${currentValue}°F', unit:"F",
            backgroundColors:
            [
             [value: 31, color: "#153591"],
@@ -140,7 +141,7 @@ preferences {
 
      valueTile("heatingSetpoint", "device.heatingSetpoint", inactiveLabel: false) 
     	{
-      state "default", label:'Heat\n${currentValue}°F', unit:"F",
+      state "default", label:'Heat\n ${currentValue}°F', unit:"F",
        backgroundColors:
        [
         [value: 31, color: "#153591"],
@@ -183,7 +184,7 @@ preferences {
         */
         
 		valueTile("humidity", "device.humidity", inactiveLabel: false) {
-			state "humidity", label:'Humidity\n${currentValue}%', unit:"",
+			state "humidity", label:'Humidity\n ${currentValue}%', unit:"",
               icon: "http://cdn.device-icons.smartthings.com/Weather/weather12-icn@2x.png",
                backgroundColors : [
                     [value: 01, color: "#724529"],
@@ -196,7 +197,7 @@ preferences {
 		}
         
 		valueTile("battery", "device.battery", inactiveLabel: false) {
-			state "battery", label:'Battery\n${currentValue}%', unit:"",
+			state "battery", label:'Battery\n ${currentValue}%', unit:"",
              backgroundColors : [
                     [value: 20, color: "#720000"],
                     [value: 40, color: "#724529"],
