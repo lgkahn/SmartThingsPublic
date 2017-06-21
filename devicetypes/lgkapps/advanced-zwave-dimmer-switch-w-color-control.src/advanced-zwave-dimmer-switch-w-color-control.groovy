@@ -26,17 +26,11 @@
 metadata {
 	definition (name: "Advanced Zwave Dimmer Switch w Color Control", namespace: "lgkapps", author: "kahn@lgk.com") {
 		capability "Actuator"
-		capability "Indicator"
 		capability "Switch"
 		capability "Polling"
 		capability "Refresh"
 		capability "Sensor"
-        capability "Switch Level"
-        capability "Color Control"
-        
-        command "setColor"
-        command "setAdjustedColor"
-
+	
 		fingerprint inClusters: "0x26"
 	}
 
@@ -70,10 +64,6 @@ metadata {
 				attributeState "level", action:"switch level.setLevel"
 			}
 		}
-
- controlTile("rgbSelector", "device.color", "color", height: 6, width: 4, inactiveLabel: false) {
-		state "color", action:"setAdjustedColor"
-	}
 		standardTile("indicator", "device.indicatorStatus", height: 2, width: 2, inactiveLabel: false, decoration: "flat") {
 			state "when off", action:"indicator.indicatorWhenOn", icon:"st.indicators.lit-when-off"
 			state "when on", action:"indicator.indicatorNever", icon:"st.indicators.lit-when-on"
@@ -259,43 +249,3 @@ log.debug "in invert"
 		zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 4, size: 1).format()
 	}
 }
-
-
-def setColor(value) {
-	log.debug "setColor: ${value}, $this"
-	if (value.hue) { sendEvent(name: "hue", value: value.hue)}
-	if (value.saturation) { sendEvent(name: "saturation", value: value.saturation)}
-	if (value.hex) { sendEvent(name: "color", value: value.hex)}
-	if (value.level) { sendEvent(name: "level", value: value.level)}
-	}
-
-
-def setAdjustedColor(value) {
-	if (value) {
-        log.trace "setAdjustedColor: ${value}"
-        def adjusted = value + [:]
-        adjusted.hue = adjustOutgoingHue(value.hue)
-        // Needed because color picker always sends 100
-        adjusted.level = null 
-        setColor(adjusted)
-    }
-}
-
-def adjustOutgoingHue(percent) {
-	def adjusted = percent
-	if (percent > 31) {
-		if (percent < 63.0) {
-			adjusted = percent + (7 * (percent -30 ) / 32)
-		}
-		else if (percent < 73.0) {
-			adjusted = 69 + (5 * (percent - 62) / 10)
-		}
-		else {
-			adjusted = percent + (2 * (100 - percent) / 28)
-		}
-	}
-	log.info "percent: $percent, adjusted: $adjusted"
-	adjusted
-}
-
-
